@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="21X Sports concept demo for Albion College: an AI enrollment agent over text, RCS and web chat.">
+<title>Albion Enrollment Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Archivo:wdth,wght@87.5..100,400..800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: co-branded pitch for Albion College admissions. The hero is a recorded agent run: on the right, a phone
+   showing RCS from a verified "Albion College" sender (or the albion.edu site with the chat assistant);
+   on the left, the agent's activity log and the admissions funnel for one student. Then how it works,
+   the funnel math, pilot, calculator and partnership steps. Brand: Albion purple with gold as the one accent,
+   a serif headline face the way albion.edu sets its headlines, a condensed grotesque for everything else. */
+:root{
+  --bg:#F7F5F9; --surface:#FFFFFF; --wash:#EEEAF0;
+  --ink:#262626; --muted:#5F5A68; --line:#DCD6E2;
+  --purple:#4B306A; --purple-deep:#3A2452; --gold:#FFC845; --gold-ink:#8A6400; --teal:#00747A;
+  --green:#1B7A4E; --amber:#94600A; --blue:#2F5FA8; --coral:#B23F2E;
+  --x21:#8A6400; --panel:#1E1526; --panel-ink:#E6E0EC; --panel-muted:#9A90A6; --panel-line:#30253C;
+  --display:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  --body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --scr:#F4F2F6; --scr-ink:#1E1E1E; --scr-muted:#6A6475; --mine:#4B306A; --btn-ink:#4B306A;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#120D18; --surface:#1B1422; --wash:#231A2C; --ink:#ECE7F0; --muted:#A79FB2; --line:#33283E;
+  --gold-ink:#FFD36A; --teal:#5FC8CE; --green:#5CC79B; --amber:#E7A23B; --blue:#8FB4F0; --coral:#E8836F; --x21:#FFD36A;
+  --panel:#0B0710; --panel-ink:#E6E0EC; --panel-muted:#8E8499; --panel-line:#261C30; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120D18; --surface:#1B1422; --wash:#231A2C; --ink:#ECE7F0; --muted:#A79FB2; --line:#33283E;
+  --gold-ink:#FFD36A; --teal:#5FC8CE; --green:#5CC79B; --amber:#E7A23B; --blue:#8FB4F0; --coral:#E8836F; --x21:#FFD36A;
+  --panel:#0B0710; --panel-ink:#E6E0EC; --panel-muted:#8E8499; --panel-line:#261C30; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.55; padding-inline:20px}
+.wrap{max-width:1180px; margin:0 auto}
+h1,h2,h3,h4,h5{font-family:var(--display); font-weight:600; margin:0; line-height:1.08; letter-spacing:-.015em; text-wrap:balance}
+p{margin:0}
+.eyebrow{font:700 12px var(--body); letter-spacing:.18em; text-transform:uppercase; color:var(--gold-ink)}
+:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+
+.top{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding-block:22px 6px}
+.lockup{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.ab{display:flex; align-items:center; gap:10px; font:600 20px var(--display); color:var(--ink)}
+.ab .shield{width:28px; height:32px}
+.cross{color:var(--muted); font:500 18px var(--body)}
+.x21{font:800 20px var(--body); letter-spacing:.02em; display:flex; gap:6px; align-items:baseline}
+.x21 b{color:var(--x21)}
+.tag{font:600 11px var(--body); text-transform:uppercase; letter-spacing:.08em; border:1px solid var(--line); padding:5px 11px; color:var(--muted)}
+
+.hero{display:grid; grid-template-columns:minmax(0,1fr) 372px; grid-template-areas:"intro phone" "tabs phone" "ops phone"; grid-template-rows:auto auto 1fr; column-gap:48px; align-items:start; padding-block:28px 64px}
+.intro{grid-area:intro} .tabs{grid-area:tabs} .ops{grid-area:ops} .phone-col{grid-area:phone}
+.hero h1{font-size:clamp(40px,5vw,66px); margin-top:14px; line-height:1.02; color:var(--purple)}
+.hero h1 em{font-style:italic; color:var(--ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .hero h1{color:#D9C6F0}}
+:root[data-theme="dark"] .hero h1{color:#D9C6F0}
+.lede{font-size:18px; color:var(--muted); max-width:36em; margin-top:18px}
+.lede b{color:var(--ink); font-weight:600}
+
+.tabs{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px}
+.tab{font:700 12.5px var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); padding:9px 15px; cursor:pointer; display:flex; gap:9px; align-items:center}
+.tab:hover{border-color:var(--purple)}
+.tab[aria-selected="true"]{background:var(--purple); color:#FFFFFF; border-color:var(--purple)}
+.tab .n{font:500 11px var(--mono); opacity:.7}
+.scene{display:grid; gap:6px; max-width:40em}
+.scene h3{font-size:22px}
+.scene p{color:var(--muted)}
+.moments{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px}
+.moments li{font:600 11.5px var(--body); color:var(--muted); border:1px solid var(--line); padding:4px 8px; transition:all .3s}
+.moments li.past{color:var(--ink); border-color:var(--ink)}
+.moments li.on{background:var(--gold); color:#262626; border-color:var(--gold)}
+
+.ops{margin-top:20px; display:grid; gap:18px; min-width:0}
+.console{background:var(--panel); color:var(--panel-ink); overflow:hidden; min-width:0}
+.chead{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--panel-line); font:700 12px var(--body); letter-spacing:.12em; text-transform:uppercase}
+.chead .state{font:500 11px var(--mono); letter-spacing:0; text-transform:none; color:var(--panel-muted); display:flex; gap:7px; align-items:center}
+.chead .state i{width:7px; height:7px; border-radius:50%; background:#FFC845}
+.chead .state.idle i{background:var(--panel-muted)}
+.log{list-style:none; margin:0; padding:10px 0; height:300px; overflow-y:auto; font:12px/1.5 var(--mono)}
+.log li{display:grid; grid-template-columns:52px minmax(0,1fr); gap:10px; padding:5px 14px; animation:rise .3s ease both}
+.log .k{font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:2px 0; text-align:center; align-self:start; font-weight:500}
+.k-evt{background:#3B2D4A; color:#D8CCE6} .k-think{color:var(--panel-muted); border:1px solid var(--panel-line)}
+.k-tool{background:#0F5A40; color:#B9F0D8} .k-rule{background:#5C4210; color:#F8D58F}
+.k-write{background:#1E3F7A; color:#C3D6FF} .k-human{background:#6B3A10; color:#FFD3A8} .k-send{background:#4A3A10; color:#FFE39A}
+.log .t{min-width:0; overflow-wrap:anywhere}
+.log .fn{color:#FFFFFF} .log .args{color:var(--panel-muted)}
+.log .res{display:block; color:#9FE3C1} .log .thought{color:var(--panel-muted); font-style:italic}
+
+.desk{border:1px solid var(--line); background:var(--surface); overflow:hidden; min-width:0}
+.dhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line); background:var(--wash)}
+.dhead h4{font-size:17px; letter-spacing:0}
+.dhead p{font-size:13px; color:var(--muted)}
+.status{font:700 11px var(--body); text-transform:uppercase; letter-spacing:.06em; padding:4px 10px; white-space:nowrap}
+.st-open{background:color-mix(in srgb,var(--amber) 18%,transparent); color:var(--amber)}
+.st-ok{background:color-mix(in srgb,var(--green) 18%,transparent); color:var(--green)}
+.st-fit{background:color-mix(in srgb,var(--blue) 18%,transparent); color:var(--blue)}
+.dtable-wrap{overflow-x:auto}
+.dtable{width:100%; border-collapse:collapse; font-size:14px; min-width:440px}
+.dtable th,.dtable td{text-align:left; padding:9px 14px; border-bottom:1px solid var(--line); white-space:nowrap; font-variant-numeric:tabular-nums}
+.dtable th{font:500 10.5px var(--mono); letter-spacing:.05em; text-transform:uppercase; color:var(--muted)}
+.dtable td:first-child b{display:block; font-weight:600}
+.dtable td:first-child span{font-size:12px; color:var(--muted)}
+.cell{font:12px var(--mono)} .okc{color:var(--green)} .warnc{color:var(--amber)} .fitc{color:var(--blue)} .na{color:var(--muted)}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{0%{background:color-mix(in srgb,var(--gold) 30%,transparent)}100%{background:transparent}}
+.dfoot{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid var(--line)}
+.dfoot div{padding:10px 14px; font-size:12.5px; color:var(--muted); border-right:1px solid var(--line); min-width:0}
+.dfoot div:last-child{border-right:0}
+.dfoot b{display:block; font:600 20px var(--display); color:var(--ink); font-variant-numeric:tabular-nums}
+.queue{padding:10px 14px 12px; border-top:1px solid var(--line); display:grid; gap:6px; font-size:13.5px}
+.queue h5{font:500 10.5px var(--mono); letter-spacing:.05em; text-transform:uppercase; color:var(--muted)}
+.qi{display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px; align-items:baseline; animation:rise .3s ease both}
+.qnone{color:var(--muted)}
+@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* device */
+.phone-col{width:100%; display:grid; gap:12px; justify-items:center; position:sticky; top:calc(env(safe-area-inset-top,0px) + 16px); min-width:0}
+.surface-tag{font:500 11px var(--mono); letter-spacing:.03em; text-transform:uppercase; color:var(--muted); display:flex; gap:8px; align-items:center}
+.surface-tag i{width:7px; height:7px; border-radius:50%; background:var(--gold)}
+.device{width:100%; max-width:372px; transition:opacity .28s ease}
+.device.swap{opacity:0}
+.device.phone{background:#1A1420; border-radius:46px; padding:12px; box-shadow:0 30px 60px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08) inset}
+.device.phone .screen{border-radius:36px}
+.device.web{border:1px solid var(--line); overflow:hidden; background:#fff; box-shadow:0 30px 60px -34px rgba(0,0,0,.45)}
+.device.web .screen{border-radius:0}
+.device.web .rchrome,.device.phone .wchrome{display:none}
+.screen{position:relative; background:var(--scr); color:var(--scr-ink); overflow:hidden; height:716px; display:flex; flex-direction:column; font-family:var(--body)}
+.screen>*{min-width:0}
+.sbar{display:flex; justify-content:space-between; padding:12px 22px 4px; font:600 12px var(--body)}
+.thead{display:flex; align-items:center; gap:10px; padding:8px 14px 10px; border-bottom:1px solid #E3DEE8; background:#fff}
+.avatar{width:42px; height:42px; border-radius:50%; background:#4B306A; display:grid; place-items:center; flex:none}
+.avatar svg{width:22px; height:26px}
+.tname{font:600 15px var(--body); display:flex; align-items:center; gap:5px}
+.tsub{font-size:11.5px; color:var(--scr-muted)}
+.verified{width:15px; height:15px; flex:none}
+.bbar{display:flex; gap:10px; align-items:center; padding:9px 12px; background:#E8E4EC}
+.dots{display:flex; gap:5px; flex:none} .dots i{width:9px; height:9px; border-radius:50%; background:#C6BFCD}
+.url{flex:1; min-width:0; background:#fff; border-radius:99px; padding:4px 12px; font:500 11px var(--mono); color:#6A6475; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.store{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 14px; background:#4B306A; color:#fff}
+.store .wm{display:flex; align-items:center; gap:8px; font:600 15px var(--display)}
+.store .wm svg{width:18px; height:21px}
+.store .nav{font:700 9.5px var(--body); letter-spacing:.08em; text-transform:uppercase; color:#FFC845; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0}
+.pdp{display:grid; gap:4px; padding:12px 14px; background:#fff; border-bottom:1px solid #E3DEE8}
+.pdp h5{font:600 16px var(--display); color:#4B306A}
+.pdp p{font-size:11.5px; color:#6A6475}
+.pchips{display:flex; gap:4px; flex-wrap:wrap; margin-top:4px}
+.pchips span{font:700 9.5px var(--body); letter-spacing:.04em; text-transform:uppercase; background:#FFC845; color:#262626; padding:2px 7px}
+.chat-h{display:flex; align-items:center; gap:10px; padding:10px 14px; background:#262626; color:#fff}
+.chat-h .av{width:30px; height:30px; border-radius:50%; background:#FFC845; color:#262626; display:grid; place-items:center; font:800 11px var(--body); flex:none}
+.chat-h b{font:700 13.5px var(--body); display:block; line-height:1.25}
+.chat-h small{font-size:11px; color:#BDBDBD; display:flex; gap:5px; align-items:center}
+.chat-h small i{width:6px; height:6px; border-radius:50%; background:#5FD08F}
+.thread{flex:1; overflow-y:auto; padding:14px 12px 8px; display:flex; flex-direction:column; gap:8px}
+.row{display:flex; animation:rise .3s ease both; min-width:0}
+.row.me{justify-content:flex-end}
+.bub{max-width:84%; background:#fff; border-radius:18px 18px 18px 6px; padding:9px 13px; font-size:14px; line-height:1.42; box-shadow:0 1px 0 rgba(0,0,0,.05); white-space:pre-wrap; overflow-wrap:anywhere}
+.me .bub{background:var(--mine); color:#fff; border-radius:18px 18px 6px 18px}
+.device.web .bub{border-radius:14px 14px 14px 4px}
+.device.web .me .bub{border-radius:14px 14px 4px 14px}
+.typing{display:inline-flex; gap:4px; padding:12px 14px}
+.typing span{width:6px; height:6px; border-radius:50%; background:#A8A1B1; animation:blink 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.stamp{align-self:center; font-size:11px; color:var(--scr-muted); padding:4px 0}
+.card{width:86%; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 1px 0 rgba(0,0,0,.05), 0 0 0 1px #E3DEE8}
+.device.web .card{border-radius:12px}
+.card svg{display:block; width:100%; height:auto}
+.cb{padding:11px 13px 12px; display:grid; gap:3px}
+.cb .cn{font:600 14.5px var(--body)}
+.cb .cs{font-size:13px; color:var(--scr-muted); white-space:pre-line; line-height:1.4}
+.cbtn{display:block; width:100%; font:700 13.5px var(--body); color:var(--btn-ink); background:#fff; border:0; border-top:1px solid #E3DEE8; padding:11px 10px; text-align:center; cursor:default}
+.cbtn.press{background:#F3ECFA}
+.webview{position:absolute; inset:auto 0 0 0; height:72%; background:#fff; border-radius:22px 22px 0 0; box-shadow:0 -12px 40px rgba(0,0,0,.28); transform:translateY(105%); transition:transform .45s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; z-index:5; color:var(--scr-ink)}
+.webview.open{transform:none}
+.scrim{position:absolute; inset:0; background:rgba(20,12,28,.4); opacity:0; pointer-events:none; transition:opacity .3s; z-index:4}
+.scrim.open{opacity:1}
+.wv-grab{width:40px; height:4px; border-radius:2px; background:#CBC4D2; margin:8px auto 4px}
+.wv-bar{display:flex; justify-content:space-between; align-items:center; padding:4px 16px 10px; border-bottom:1px solid #E3DEE8; font-size:12px; color:var(--scr-muted)}
+.wv-bar b{color:var(--scr-ink); font-weight:600; font-size:13px}
+.wv-body{flex:1; overflow:auto; padding:14px 16px; display:grid; gap:9px; align-content:start}
+.wv-body h5{font-size:18px; color:#4B306A}
+.wv-body p{font-size:12.5px; color:var(--scr-muted)}
+.wv-row{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; border:1px solid #E3DEE8; padding:9px 12px; font-size:13px}
+.wv-row small{display:block; color:var(--scr-muted); font-size:11.5px}
+.wv-row.tot{border-color:#4B306A; font-weight:600}
+.wv-submit{font:700 13.5px var(--body); letter-spacing:.06em; text-transform:uppercase; background:#4B306A; color:#fff; border:0; padding:12px; margin-top:4px}
+.wv-submit.done{background:#1B7A4E}
+.composer{display:flex; gap:8px; align-items:center; padding:8px 12px 14px; border-top:1px solid #E3DEE8; background:var(--scr)}
+.cbox{flex:1; min-width:0; background:#fff; border:1px solid #E3DEE8; border-radius:99px; padding:9px 14px; font:13px var(--body); color:var(--scr-muted)}
+.send{width:36px; height:36px; border-radius:50%; background:#4B306A; color:#fff; display:grid; place-items:center; flex:none; opacity:.4}
+.send svg{width:16px; height:16px}
+.phone-ctl{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+.btn{font:700 12px var(--body); letter-spacing:.06em; text-transform:uppercase; background:transparent; color:var(--ink); border:1.5px solid var(--line); padding:7px 16px; cursor:pointer}
+.btn:hover{border-color:var(--purple)}
+.hint{font-size:13px; color:var(--muted); text-align:center; max-width:372px}
+.powered{font:11px var(--mono); color:var(--muted)}
+.powered b{color:var(--x21)}
+
+section.band{padding-block:72px; border-top:1px solid var(--line)}
+.shead{display:grid; gap:12px; max-width:46em; margin-bottom:34px}
+.shead h2{font-size:clamp(28px,3.6vw,44px); color:var(--purple)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .shead h2,:root:not([data-theme="light"]) .close h2{color:#D9C6F0}}
+:root[data-theme="dark"] .shead h2,:root[data-theme="dark"] .close h2{color:#D9C6F0}
+.shead h2 em{font-style:italic; color:var(--ink)}
+.shead p{color:var(--muted); font-size:17px}
+.parts{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px}
+.part{display:grid; gap:8px; align-content:start; background:var(--surface); padding:22px; border-top:4px solid var(--c)}
+.part small{font:700 11px var(--body); text-transform:uppercase; letter-spacing:.1em; color:var(--c)}
+.part h3{font-size:20px}
+.part p{color:var(--muted); font-size:15px}
+
+.facts{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); background:var(--surface); overflow:hidden}
+.facts div{padding:22px; border-right:1px solid var(--line); display:grid; gap:6px; align-content:start}
+.facts div:last-child{border-right:0}
+.facts b{font:600 clamp(28px,3.4vw,40px) var(--display); line-height:1; color:var(--purple)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .facts b{color:#D9C6F0}}
+:root[data-theme="dark"] .facts b{color:#D9C6F0}
+.facts span{color:var(--muted); font-size:15px}
+.note{margin-top:22px; color:var(--muted); font-size:15px; max-width:52em}
+
+.pilot{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:36px}
+.lists{list-style:none; margin:0; padding:0}
+.lists li{display:grid; gap:2px; padding:14px 0; border-bottom:1px solid var(--line)}
+.lists b{font-weight:600}
+.lists span{color:var(--muted); font-size:15px}
+.measure h3{font-size:19px; margin-bottom:12px}
+.measure table{width:100%; border-collapse:collapse; font-size:14.5px}
+.measure th,.measure td{text-align:left; padding:10px 8px 10px 0; border-bottom:1px solid var(--line); vertical-align:top}
+.measure th{font:500 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+.ask{margin-top:22px; background:var(--wash); padding:16px 18px; font-size:15px; border-left:4px solid var(--gold)}
+.ask b{display:block; font:600 17px var(--display); margin-bottom:4px}
+
+.calc{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:36px; align-items:start}
+.sliders{display:grid; gap:22px}
+.sl{display:grid; gap:6px}
+.sl label{display:flex; justify-content:space-between; gap:10px; font-weight:600}
+.sl output{font:500 15px var(--mono); color:var(--gold-ink)}
+.sl input{width:100%; accent-color:var(--purple)}
+.res{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px}
+.res div{border-top:3px solid var(--gold); padding-top:12px; display:grid; gap:4px; min-width:0}
+.res b{font:600 clamp(28px,3.6vw,44px) var(--display); line-height:1; font-variant-numeric:tabular-nums}
+.res span{color:var(--muted); font-size:14px}
+.fine-calc{margin-top:18px; font-size:13.5px; color:var(--muted)}
+
+.steps{display:grid; grid-template-columns:repeat(5,minmax(0,1fr))}
+.stp{padding-right:18px; display:grid; gap:10px; align-content:start}
+.stp .bar{height:4px; margin-right:-18px; background:var(--line)}
+.stp:nth-child(-n+2) .bar{background:var(--gold)}
+.stp:last-child .bar{margin-right:0}
+.stp small{font:500 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+.stp:nth-child(-n+2) small{color:var(--gold-ink)}
+.stp h3{font-size:18px}
+.stp p{font-size:14.5px; color:var(--muted)}
+
+.close{padding-block:80px 48px; border-top:1px solid var(--line); display:grid; gap:22px}
+.close h2{font-size:clamp(34px,5vw,62px); max-width:13em; color:var(--purple)}
+.close h2 em{font-style:italic; color:var(--ink)}
+.close p.q{font-size:18px; color:var(--muted); max-width:40em}
+.sig{display:flex; gap:22px; flex-wrap:wrap; align-items:center; color:var(--muted); font-size:15px}
+.sig b{color:var(--ink)}
+.fine{font-size:12px; color:var(--muted); max-width:64em; padding-block:0 40px}
+
+@media (max-width:980px){
+  .hero{grid-template-columns:minmax(0,1fr); grid-template-areas:"intro" "tabs" "phone" "ops"; grid-template-rows:none; padding-block:12px 40px}
+  .tabs{flex-wrap:nowrap; overflow-x:auto; margin-inline:-20px; padding:2px 20px 6px}
+  .tab{flex:none; min-height:44px}
+  .phone-col{position:static; margin-top:18px}
+  .pilot,.calc{grid-template-columns:minmax(0,1fr)}
+  .steps{grid-template-columns:minmax(0,1fr); gap:22px}
+  .stp{padding:0} .stp .bar{margin-right:0}
+}
+@media (max-width:600px){
+  body{padding-inline:16px; font-size:16px}
+  .tabs{margin-inline:-16px; padding-inline:16px}
+  .device{max-width:none}
+  .device.phone{border-radius:34px; padding:7px}
+  .device.phone .screen{border-radius:28px}
+  .screen{height:min(700px, calc(100svh - 90px)); min-height:560px}
+  .res,.facts{grid-template-columns:minmax(0,1fr)}
+  .facts div{border-right:0; border-bottom:1px solid var(--line)}
+  .dfoot{grid-template-columns:minmax(0,1fr)}
+  .dfoot div{border-right:0; border-bottom:1px solid var(--line)}
+  .log{height:260px}
+  section.band{padding-block:48px}
+}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} }
+</style>
+
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="lockup">
+      <span class="ab"><svg class="shield" viewBox="0 0 28 32" aria-hidden="true"><path d="M14 1 L27 6 V17 C27 24 21 29 14 31 C7 29 1 24 1 17 V6 Z" fill="#4B306A"/><path d="M14 6 L22 9 V17 C22 22 18 25.5 14 27 C10 25.5 6 22 6 17 V9 Z" fill="#FFC845"/><path d="M9 17 L13 21 L20 12" stroke="#4B306A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Albion College</span>
+      <span class="cross" aria-hidden="true">×</span>
+      <span class="x21"><b>21X</b>Sports</span>
+    </div>
+    <span class="tag">Concept demo · prepared Oct 2026</span>
+  </header>
+
+  <div class="hero">
+    <div class="intro">
+      <p class="eyebrow">AI enrollment agent · text, RCS, web chat and calls</p>
+      <h1>Every inquiry gets <em>a follow-up.</em></h1>
+      <p class="lede">Watch recorded agent runs. A prospective student asks about Albion in his own words. The agent answers from <b>Albion's own facts</b>: the new $38,000 tuition, the $2,000 Visit Award, merit scholarships and the applied-learning guarantee. It <b>books the campus visit</b>, follows up until the <b>deposit</b>, and hands anything personal to a counselor or coach.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Agent runs" id="tabs"></div>
+
+    <div class="ops">
+      <div class="scene" id="scene"></div>
+      <div class="console" aria-label="Agent activity">
+        <div class="chead"><span>Agent activity</span><span class="state" id="agentState"><i></i>running</span></div>
+        <ol class="log" id="log" aria-live="polite"></ol>
+      </div>
+      <div class="desk" aria-label="Admissions record">
+        <div class="dhead"><div><h4 id="dTitle">Admissions record</h4><p id="dSub"></p></div><span class="status st-open" id="dStatus">Inquiry</span></div>
+        <div class="dtable-wrap"><table class="dtable"><thead><tr><th>Step</th><th>Detail</th><th>Date</th><th>Status</th></tr></thead><tbody id="dBody"></tbody></table></div>
+        <div class="dfoot">
+          <div><b id="dVal">$0</b><span id="dValL">Aid on offer</span></div>
+          <div><b id="dDays">—</b><span id="dDaysL">Days since inquiry</span></div>
+          <div><b id="dHand">0</b>Handed to a person</div>
+        </div>
+        <div class="queue"><h5>Counselor and coach inbox</h5><div id="dQueue"><span class="qnone">Nothing needs a person yet.</span></div></div>
+      </div>
+    </div>
+
+    <div class="phone-col">
+      <span class="surface-tag" id="surfaceTag"><i></i>RCS · verified Albion College sender</span>
+      <div class="device phone" id="device" aria-label="A phone showing an RCS conversation with Albion College, or the albion.edu site with the chat assistant">
+        <div class="screen" id="screen">
+          <div class="wchrome">
+            <div class="bbar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="url">albion.edu/admission/cost</span></div>
+            <div class="store"><span class="wm"><svg viewBox="0 0 28 32" aria-hidden="true"><path d="M14 1 L27 6 V17 C27 24 21 29 14 31 C7 29 1 24 1 17 V6 Z" fill="#FFC845"/></svg>Albion College</span><span class="nav">Apply · Visit · Give</span></div>
+            <div class="pdp"><h5>Albion's new price</h5><p>Published tuition drops to $38,000 starting fall 2027. The average family pays about $19,000 a year after aid.</p><div class="pchips"><span>100% get scholarships</span><span>$2,000 Visit Award</span></div></div>
+            <div class="chat-h"><span class="av">A</span><div><b>Albion Admissions Assistant</b><small><i></i>AI assistant · replies in seconds</small></div></div>
+          </div>
+          <div class="rchrome">
+            <div class="sbar"><span>9:41</span><span aria-hidden="true">5G ▮▮▮</span></div>
+            <div class="thead">
+              <div class="avatar" aria-hidden="true"><svg viewBox="0 0 28 32"><path d="M14 1 L27 6 V17 C27 24 21 29 14 31 C7 29 1 24 1 17 V6 Z" fill="#FFC845"/><path d="M9 17 L13 21 L20 12" stroke="#4B306A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div>
+                <div class="tname">Albion College
+                  <svg class="verified" viewBox="0 0 16 16" aria-label="Verified sender"><path fill="#4B306A" d="M8 0l2 1.6 2.5-.2.8 2.4 2.1 1.4-.8 2.4.8 2.4-2.1 1.4-.8 2.4-2.5-.2L8 16l-2-1.6-2.5.2-.8-2.4L.6 10.8l.8-2.4-.8-2.4 2.1-1.4.8-2.4 2.5.2z"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>
+                </div>
+                <div class="tsub">Verified · Office of Admission</div>
+              </div>
+            </div>
+          </div>
+          <div class="thread" id="thread"></div>
+          <div class="scrim" id="scrim"></div>
+          <div class="webview" id="webview" aria-hidden="true"></div>
+          <div class="composer"><div class="cbox" id="cbox">RCS message</div><span class="send" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1.8l13 6.2-13 6.2 1.6-6.2z"/></svg></span></div>
+        </div>
+      </div>
+      <div class="phone-ctl">
+        <button class="btn" id="pause" type="button">Pause</button>
+        <button class="btn" id="speed" type="button">Speed 1×</button>
+        <button class="btn" id="replay" type="button">Replay</button>
+      </div>
+      <p class="hint">Recorded runs. Students, parents, coaches and dates are fictional. Prices, awards and scholarships are Albion's published figures.</p>
+      <span class="powered">Agent powered by <b>21X</b>, formerly Structurely</span>
+    </div>
+  </div>
+
+  <section class="band">
+    <div class="shead">
+      <p class="eyebrow">How it works</p>
+      <h2>It knows the price, the deadlines and <em>when to hand off.</em></h2>
+      <p>The agent works from the inquiry record and Albion's published facts. It never invents an aid figure or a deadline, and anything personal, from a family's finances to a recruit's eligibility, goes to a counselor or coach with the conversation attached.</p>
+    </div>
+    <div class="parts">
+      <div class="part" style="--c:var(--gold-ink)"><small>Admission facts</small><h3>The new price, explained one to one</h3><p>$38,000 tuition from fall 2027, the roughly $19,000 average net cost, merit scholarship tiers, the Visit Award and the applied-learning guarantee.</p></div>
+      <div class="part" style="--c:var(--teal)"><small>Every channel</small><h3>Text, RCS, web chat, email and calls</h3><p>One conversation per family across all of them, from a verified Albion College sender, with a human-sounding call when a parent asks for one.</p></div>
+      <div class="part" style="--c:var(--purple)"><small>Books the moments that matter</small><h3>Visits, FAFSA, deposits</h3><p>Department Days, Saturday visits, Fall Preview Day and coach visits booked in the thread, then reminders and summer-checklist nudges.</p></div>
+      <div class="part" style="--c:var(--coral)"><small>Works for counselors and coaches</small><h3>Handoffs with context</h3><p>Aid appeals, eligibility questions and anything emotional go to a person. Counselors see the transcript and the next step.</p></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shead">
+      <p class="eyebrow">Why follow-up is the whole game</p>
+      <h2>One enrolled student is worth about <em>$75,000.</em></h2>
+      <p>Albion says the average family pays roughly $19,000 a year after aid. Over four years that is about $75,000 of net revenue per student. "Flat is the new growth," and every inquiry that goes quiet is a seat that has to be refilled.</p>
+    </div>
+    <div class="facts">
+      <div><b>$38,000</b><span>published tuition starting fall 2027, down from the current sticker</span></div>
+      <div><b>$2,000 / yr</b><span>Visit Award for admitted students who visit before April 30 of senior year</span></div>
+      <div><b>24 teams</b><span>NCAA Division III programs, each recruiting large rosters by personal follow-up</span></div>
+    </div>
+    <p class="note">Figures as published on albion.edu in October 2026. The per-student value is 21X's estimate from Albion's published average net cost, not an Albion figure.</p>
+  </section>
+
+  <section class="band">
+    <div class="shead">
+      <p class="eyebrow">Controlled pilot</p>
+      <h2>Start with the lists Albion already has.</h2>
+    </div>
+    <div class="pilot">
+      <ul class="lists">
+        <li><b>Fall 2027 inquiries</b><span>Every inquiry gets a reply in minutes, the new price explained, and a visit booked. The runs above.</span></li>
+        <li><b>Admitted, not yet deposited</b><span>Aid questions answered, the Visit Award used, parents called when they ask, until the deposit lands.</span></li>
+        <li><b>Athletic recruits</b><span>Questionnaires and camp lists for 24 teams worked by text, with visits booked with the coach.</span></li>
+        <li><b>Deposited students over the summer</b><span>Housing, orientation and registration nudges so deposited students show up in August.</span></li>
+      </ul>
+      <div class="measure">
+        <h3>What we measure, against a holdout group</h3>
+        <table>
+          <thead><tr><th>Outcome</th><th>Measured by</th></tr></thead>
+          <tbody>
+            <tr><td>Inquiries that visit</td><td>Visit rate, agent group vs. a holdout handled as today</td></tr>
+            <tr><td>Admits that deposit</td><td>Yield rate for each group</td></tr>
+            <tr><td>Deposits that enroll</td><td>Summer melt for each group</td></tr>
+            <tr><td>Counselor time</td><td>Questions resolved without a person; opt-outs reviewed weekly</td></tr>
+          </tbody>
+        </table>
+        <div class="ask"><b>The numbers we need from Albion</b>Inquiries, applications, admits and deposits per cycle; visit and yield rates; summer melt; which lists have consent to text; and the CRM the admissions team works in.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shead">
+      <p class="eyebrow">The economic story to prove</p>
+      <h2>A few more deposits pay for the whole program.</h2>
+      <p>Move the inputs. These are placeholders, not Albion's figures. Your real numbers replace them in discovery.</p>
+    </div>
+    <div class="calc">
+      <div class="sliders">
+        <div class="sl"><label for="sAdm">Admitted students per cycle <output id="oAdm">2,500</output></label><input type="range" id="sAdm" min="500" max="6000" step="100" value="2500"></div>
+        <div class="sl"><label for="sYield">Yield today <output id="oYield">14%</output></label><input type="range" id="sYield" min="5" max="40" step="1" value="14"></div>
+        <div class="sl"><label for="sLift">Yield lift from the agent <output id="oLift">2.0 pts</output></label><input type="range" id="sLift" min="0" max="8" step="0.5" value="2"></div>
+        <div class="sl"><label for="sNet">Net revenue per student per year <output id="oNet">$19,000</output></label><input type="range" id="sNet" min="10000" max="35000" step="500" value="19000"></div>
+      </div>
+      <div>
+        <div class="res">
+          <div><b id="rStu">50</b><span>more enrolled students per cycle</span></div>
+          <div><b id="rYear">$950,000</b><span>net revenue in year one</span></div>
+          <div><b id="rFour">$3.8M</b><span>over four years, for one entering class</span></div>
+        </div>
+        <p class="fine-calc">An illustration, not a projection. It counts only yield, not reduced summer melt, recruiting or retention. The pilot's holdout group measures the real lift.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shead">
+      <p class="eyebrow">Partnership</p>
+      <h2>A one-cycle pilot, paid on results.</h2>
+      <p>We start with fall 2027 inquiries, measure against a holdout group, and charge per visit booked and per enrolled student above the baseline.</p>
+    </div>
+    <div class="steps">
+      <div class="stp"><div class="bar"></div><small>Step 1</small><h3>Discovery</h3><p>Funnel numbers, consent, the CRM, and who approves the agent's voice.</p></div>
+      <div class="stp"><div class="bar"></div><small>Step 2 · this page</small><h3>Albion agent</h3><p>Built on Albion's facts and tone, reviewed by Admissions, tested on your own phones.</p></div>
+      <div class="stp"><div class="bar"></div><small>Step 3</small><h3>Pilot on inquiries</h3><p>Text first, with a holdout group; RCS sender filed in week one.</p></div>
+      <div class="stp"><div class="bar"></div><small>Step 4</small><h3>Add recruits and admits</h3><p>Coaches' lists and the admitted pool, through deposit day.</p></div>
+      <div class="stp"><div class="bar"></div><small>Step 5</small><h3>Expand</h3><p>Summer melt, annual giving and first-year retention.</p></div>
+    </div>
+  </section>
+
+  <section class="close">
+    <p class="eyebrow">Next step</p>
+    <h2>Every family hears the new price <em>from someone who answers.</em></h2>
+    <p class="q">Give us one inquiry list and one cycle, and we'll show you the visits and deposits it adds against a holdout group.</p>
+    <div class="sig"><span class="x21"><b>21X</b>Sports</span><span><b>Adam Squire</b>, President</span><span>Formerly Structurely</span></div>
+  </section>
+  <p class="fine">Concept demo built by 21X Sports for Albion College. It is not a live Albion channel, and the site shown is an illustration, not albion.edu. The students, parents, coaches, counselors, dates and conversations are fictional, and the visit calendar is a placeholder. Tuition, the average net cost, the Visit Award, merit scholarship tiers, visit dates and the applied-learning guarantee are taken from albion.edu as of October 12, 2026 and should be confirmed by Albion. The agent would work only with consented contacts and within FERPA; what it can read from the admissions CRM is settled in discovery. Phone screens follow RCS for Business capabilities as of October 2026; support varies by device and carrier, with SMS fallback. Names and marks belong to their owners.</p>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const money=n=>'$'+Math.round(n).toLocaleString('en-US');
+
+let artN=0;
+function cardArt(label,sub){
+  const u='ca'+(artN++);
+  return `<svg viewBox="0 0 300 120" aria-hidden="true"><defs><linearGradient id="${u}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4B306A"/><stop offset="1" stop-color="#2E1C44"/></linearGradient></defs>
+<rect width="300" height="120" fill="url(#${u}g)"/>
+<g opacity=".18" fill="#FFFFFF"><rect x="186" y="54" width="110" height="60"/><rect x="200" y="40" width="82" height="16"/><rect x="214" y="26" width="54" height="16"/><rect x="236" y="62" width="10" height="20"/><rect x="258" y="62" width="10" height="20"/></g>
+<path d="M30 20 L46 26 V38 C46 46 39 52 30 55 C21 52 14 46 14 38 V26 Z" fill="#FFC845"/>
+<path d="M24 38 L28 42 L37 32" stroke="#4B306A" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="60" y="36" fill="#FFFFFF" font-family="Source Serif 4, Georgia, serif" font-weight="600" font-size="17">${label}</text>
+<text x="60" y="56" fill="#D9C6F0" font-family="Archivo, Arial, sans-serif" font-size="12">${sub}</text>
+<rect x="60" y="68" width="30" height="3" fill="#FFC845"/>
+<rect x="0" y="114" width="300" height="6" fill="#FFC845"/></svg>`;
+}
+
+const RUNS=[
+ {label:'Inquiry to visit', title:'Inquiry → the new price → a booked visit', surface:'rcs',
+  desc:'Maya, a high school senior from Grand Rapids, requested info last night. The agent replies in the morning, explains what Albion costs, and books her for Fall Preview Day.',
+  moments:['Inquiry','First reply','Cost question','Scholarship tier','Visit booked','Parent looped in'],
+  desk:{title:'Admissions record · Maya Torres', sub:'Inquiry from albion.edu · East Grand Rapids HS · class of 2027', status:['st-open','Inquiry'], val:'$0', valL:'Aid on offer', days:'1', daysL:'Days since inquiry', hand:'0',
+   rows:[['Inquiry','Request Info form · biology interest','Oct 11','Received','okc'],['Visit','Not yet scheduled','—','Open','warnc'],['Application','Not started','—','Open','warnc']], queue:[]},
+  steps:[
+   ['m',0],['evt','Trigger: Request Info form submitted 9:48 PM · consent to text: yes'],
+   ['tool','crm.get_inquiry','"Maya Torres"','senior · East Grand Rapids HS · interest: biology · GPA 3.7 self-reported'],
+   ['think','Morning, not last night. Open with her interest, one question, no pitch.'],
+   ['m',1],['send','rcs.send','"Maya Torres", first touch',''],
+   ['a','Hi Maya! It\'s Jordan from Albion College Admissions. Thanks for reaching out last night. I saw biology caught your eye. What are you hoping to do with it?'],
+   ['stamp','Read 7:52 AM'],
+   ['me','Pre-med probably. Honestly though, my mom thinks a private school is way out of our budget.'],
+   ['m',2],['think','The cost question. Answer with Albion\'s published numbers, nothing invented, and don\'t promise her an aid package.'],
+   ['tool','facts.lookup','"cost", "net price"','tuition $38,000 from fall 2027 · avg family pays ~$19,000/yr after aid · 100% receive scholarships'],
+   ['a','Totally fair question, and the answer surprises a lot of families. Starting fall 2027 Albion\'s tuition is $38,000, and after scholarships the average family pays about $19,000 a year for tuition, housing and meals. Every admitted student gets a scholarship.'],
+   ['card',{art:['What Albion costs','Fall 2027 · after aid'],title:'About $19,000 a year',sub:'Average family cost for tuition, fees,\nhousing and meals after grants and scholarships',btns:['See merit scholarships','Run the net price calculator']}],
+   ['tap','See merit scholarships'],
+   ['m',3],['tool','facts.lookup','"merit scholarships 2027-28"','Presidential $20,000 (3.8+) · Webster $16,000 (3.6–3.79) · Briton $12,000 (3.39–3.59) · Ferguson $10,000'],
+   ['a','With a 3.7 you\'d be in line for the Webster Scholarship, $16,000 a year, renewable all four years. Your counselor confirms the exact tier when you apply.'],
+   ['desk',{val:'$16,000', valL:'Likely merit tier (unconfirmed)'}],
+   ['me','Okay that\'s actually not bad. What\'s the pre-med stuff like?'],
+   ['a','Strong. Every Albion student graduates with real hands-on experience, and for pre-med that usually means research or a clinical placement. The best way to see it is in person, and visiting earns you a $2,000-a-year Visit Award if you\'re admitted.'],
+   ['m',4],['card',{art:['Fall Preview Day','Saturday, Nov 7'],title:'Visit Albion',sub:'Meet biology faculty, tour the science labs,\nlunch with students · earns the $2,000 Visit Award',btns:['Nov 7 · Fall Preview Day','Oct 31 · Saturday Visit','Another date']}],
+   ['tap','Nov 7 · Fall Preview Day'],
+   ['tool','calendar.book','"Fall Preview Day", Nov 7, Maya Torres + 1','confirmed · placeholder calendar'],
+   ['a','You\'re in for November 7! I\'ve saved a spot for a parent too. Want me to text your mom the cost breakdown so she can see it for herself?'],
+   ['me','Yes please. 616-555-0142'],
+   ['m',5],['write','consent.record','616-555-0142 (parent), text','consent captured from student; parent opt-in confirmed on first reply'],
+   ['desk',{status:['st-fit','Visit booked'], rowStatus:['Nov 7 Preview Day','fitc'], queue:[['st-fit','Counselor','Maya Torres · Nov 7 Preview Day · pre-med · parent cost concern; send the aid one-pager']]}],
+   ['write','crm.update','"Maya Torres", stage=Visit scheduled','source: 21X follow-up · interest: biology/pre-med']
+  ]},
+ {label:'Parent & deposit', title:'An admitted student\'s parent, a cost question, and a deposit', surface:'rcs',
+  desc:'Maya was admitted in February. Her mother, Elena, has the aid letter and questions. The agent explains it, offers a call, and brings her to the deposit.',
+  moments:['Admitted, no deposit','Parent question','Aid letter explained','Call offered','Appeal handed off','Deposit'],
+  desk:{title:'Admissions record · Maya Torres', sub:'Admitted Feb 12 · Webster Scholarship · deposit not received', status:['st-open','Admitted'], val:'$18,000', valL:'Annual aid on offer', days:'31', daysL:'Days since admission', hand:'0',
+   rows:[['Admission','Admitted Feb 12','Feb 12','Admitted','okc'],['Aid letter','Webster $16,000 + Visit Award $2,000','Feb 20','Sent','okc'],['Deposit','$300 enrollment deposit','May 1 deadline','Open','warnc']], queue:[]},
+  steps:[
+   ['m',0],['evt','Trigger: admitted 31 days · aid letter opened · no deposit · parent opted in'],
+   ['tool','crm.get_contact','"Elena Torres"','parent of Maya · opted in Nov · last touch: Preview Day Nov 7'],
+   ['a','Hi Elena, it\'s Jordan from Albion Admissions. Congratulations again on Maya\'s admission! Her aid letter went out a couple of weeks ago. Any questions I can answer about it?'],
+   ['stamp','Read 6:40 PM'],
+   ['m',1],['me','Yes. The letter says $18,000 a year but I don\'t understand what we actually pay, and what happens if her grades slip.'],
+   ['m',2],['think','Explain the letter in plain numbers from her record. The exact net figure depends on housing and FAFSA; say what is known and what the counselor will confirm.'],
+   ['tool','aid.get_letter','"Maya Torres"','Webster $16,000 + Visit Award $2,000 = $18,000/yr · renewable with satisfactory academic progress'],
+   ['a','Happy to walk through it. Maya has the Webster Scholarship ($16,000) plus the Visit Award ($2,000) for visiting in November, so $18,000 a year before any need-based aid. Both renew every year as long as she stays in good academic standing; there\'s no GPA cliff for a rough semester.'],
+   ['card',{art:['Maya\'s aid letter','2027–28'],title:'$18,000 a year in scholarships',sub:'Webster Scholarship $16,000\nVisit Award $2,000\nRenewable all four years',btns:['What we\'d pay after this','Talk to a counselor']}],
+   ['tap','What we\'d pay after this'],
+   ['a','Your family\'s final number depends on housing and the FAFSA, so I don\'t want to guess. The average family pays about $19,000 a year all in. Would a 10-minute call with Maya\'s counselor help? I can set one up, or call you myself right now.'],
+   ['m',3],['me','A call with the counselor. And is there any way to get more aid? Her dad\'s hours got cut this year.'],
+   ['m',4],['think','A change in family finances is an aid appeal. That\'s a person\'s job, not mine. Hand it off warmly and with the facts.'],
+   ['human','counselor.handoff','"Elena Torres", aid appeal','change in income · dad\'s hours reduced · requests counselor call'],
+   ['a','I\'m sorry to hear that, and yes: a change in family income is exactly what an aid review is for. I\'ve passed this to Maya\'s counselor with your note, and she\'ll call you tomorrow. Would morning or afternoon be better?'],
+   ['me','Morning.'],
+   ['tool','calendar.book','counselor call, Thu 9:30 AM','confirmed · placeholder calendar'],
+   ['desk',{hand:'1', queue:[['st-fit','Counselor','Elena Torres · call Thu 9:30 AM · aid review: change in income · Maya admitted, no deposit']]}],
+   ['stamp','Two weeks later'],
+   ['evt','Counselor note: aid reviewed, $2,500 additional grant awarded'],
+   ['a','Hi Elena! Jordan again. Great news from Maya\'s counselor: the review added a $2,500 grant, so Maya is at $20,500 a year. If you\'re ready, the $300 enrollment deposit holds her spot and her housing priority.'],
+   ['desk',{val:'$20,500', valL:'Annual aid on offer', rowStatus:['Updated','okc']}],
+   ['card',{art:['Hold Maya\'s spot','Fall 2027'],title:'Enrollment deposit · $300',sub:'Refundable until May 1\nSecures housing priority and orientation',btns:['Pay the deposit','Questions first']}],
+   ['tap','Pay the deposit'],
+   ['m',5],['web',{title:'Enrollment deposit',note:'albion.edu · secure payment',rows:[['Enrollment deposit','Maya Torres · Fall 2027','$300']],total:'$300',foot:'Refundable until May 1.'}],
+   ['webSubmit','Deposit received'],
+   ['evt','Deposit received · Maya Torres · Fall 2027'],
+   ['desk',{status:['st-ok','Deposited'], lastStatus:['Paid','okc']}],
+   ['webClose'],
+   ['a','Welcome to the Briton family, Elena! Maya\'s spot is held. I\'ll text her about housing and orientation when those open, and you can reach me anytime.'],
+   ['write','crm.update','"Maya Torres", stage=Deposited','source: 21X follow-up · aid appeal via counselor']
+  ]},
+ {label:'Athletic recruit', title:'A recruit\'s questionnaire → a visit with the coach', surface:'rcs',
+  desc:'Marcus filled out the men\'s soccer recruiting questionnaire. The agent answers his questions about playing time, academics and cost, and books him to see a match and meet the coach.',
+  moments:['Questionnaire','Coach\'s questions','Division III and cost','Match day visit','Coach notified'],
+  desk:{title:'Recruiting record · Marcus Bell', sub:'Men\'s soccer questionnaire · Novi HS · class of 2027 · center back', status:['st-open','New recruit'], val:'$0', valL:'Aid on offer', days:'0', daysL:'Days since questionnaire', hand:'0',
+   rows:[['Questionnaire','Men\'s soccer · GPA 3.5 · club: Michigan Wolves','Oct 12','Received','okc'],['Coach contact','Not yet','—','Open','warnc'],['Visit','Not scheduled','—','Open','warnc']], queue:[]},
+  steps:[
+   ['m',0],['evt','Trigger: recruiting questionnaire submitted · men\'s soccer · consent to text: yes'],
+   ['tool','recruit.get','"Marcus Bell"','center back · Novi HS · GPA 3.5 · club: Michigan Wolves · interest: business'],
+   ['think','Coaches want three things first: position and club, academics, and whether he\'s serious. Ask like a program would, not like a brochure.'],
+   ['m',1],['a','Hey Marcus, it\'s Jordan with Albion men\'s soccer. Coach saw your questionnaire. Center back with the Wolves, nice. Quick one so he can take a real look: what\'s your highlight link, and are you a fall 2027 grad?'],
+   ['stamp','Read 4:15 PM'],
+   ['me','Yeah 2027. Here\'s my hudl: hudl.com/profile/mbell14. Honest question though, would I actually play? And D3 means no scholarship right?'],
+   ['m',2],['think','Two real questions. Playing time is the coach\'s call, not mine. Cost: D3 has no athletic scholarships, but Albion\'s academic aid applies to athletes like everyone else. Say both plainly.'],
+   ['tool','facts.lookup','"Division III aid", "merit"','no athletic scholarships in D3 · merit: Briton $12,000 at 3.39–3.59 · 100% receive scholarships'],
+   ['a','Straight answers: playing time is Coach\'s call after he watches your film, so I\'ll get this to him today. On money, Division III can\'t give athletic scholarships, but Albion\'s academic aid applies to every student, athletes included. With a 3.5 you\'d be in line for the Briton Scholarship, $12,000 a year, before any need-based aid.'],
+   ['desk',{val:'$12,000', valL:'Likely merit tier (unconfirmed)'}],
+   ['human','coach.notify','"Men\'s soccer", new recruit','Marcus Bell · CB · Michigan Wolves · hudl link · 3.5 GPA · asks about playing time'],
+   ['desk',{hand:'1', rowStatus:['Sent to coach','fitc'], queue:[['st-fit','Coach','Marcus Bell · CB · film attached · wants to know about playing time · class of 2027']]}],
+   ['me','Cool. What\'s the campus like?'],
+   ['m',3],['a','Best way to find out is a match. Albion hosts Calvin on Tuesday, October 13 at home. Come watch, meet Coach after, and tour campus. If you\'re admitted later, an official visit also earns the $2,000-a-year Visit Award.'],
+   ['card',{art:['Albion vs. Calvin','Tue, Oct 13 · Men\'s soccer'],title:'Match day visit',sub:'Watch the match, meet Coach after,\ncampus tour with a current player',btns:['Oct 13 · Match day','Another date','Just the tour']}],
+   ['tap','Oct 13 · Match day'],
+   ['m',4],['tool','calendar.book','"Match day visit", Oct 13, Marcus Bell + 1','confirmed · placeholder calendar'],
+   ['a','Done. You\'re on the list for October 13, plus one for a parent. Coach will meet you after the match. I\'ll text you parking and where to check in the day before.'],
+   ['desk',{status:['st-fit','Visit booked'], queue:[['st-fit','Coach','Marcus Bell · CB · film attached · wants to know about playing time · class of 2027'],['st-ok','Coach','Marcus Bell · visiting Oct 13 vs. Calvin · meet after the match']]}],
+   ['write','crm.update','"Marcus Bell", stage=Visit scheduled','sport: men\'s soccer · source: 21X follow-up']
+  ]}
+];
+
+let run=0, idx=0, timer=null, paused=false, speed=1, gen=0, desk=null;
+const thread=$('#thread'), log=$('#log');
+
+function addRow(el){thread.appendChild(el); thread.scrollTop=thread.scrollHeight}
+function bubble(text,me){const r=document.createElement('div'); r.className='row'+(me?' me':''); const b=document.createElement('div'); b.className='bub'; b.textContent=text; r.appendChild(b); addRow(r); return r}
+function logLine(k,html){const li=document.createElement('li'); li.innerHTML=`<span class="k k-${k}">${k==='evt'?'event':k}</span><span class="t">${html}</span>`; log.appendChild(li); log.scrollTop=log.scrollHeight}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderDesk(flash){
+  $('#dTitle').textContent=desk.title; $('#dSub').textContent=desk.sub;
+  const st=$('#dStatus'); st.className='status '+desk.status[0]; st.textContent=desk.status[1];
+  $('#dVal').textContent=desk.val; $('#dValL').textContent=desk.valL; $('#dDays').textContent=desk.days; $('#dDaysL').textContent=desk.daysL||'Days since inquiry'; $('#dHand').textContent=desk.hand;
+  const tb=$('#dBody'); tb.innerHTML=desk.rows.map(r=>`<tr><td><b>${esc(r[0])}</b><span>${esc(r[1])}</span></td><td class="cell">${esc(r[1].split(' · ')[0])}</td><td>${esc(r[2])}</td><td class="cell ${r[4]}">${esc(r[3])}</td></tr>`).join('');
+  const q=$('#dQueue'); q.innerHTML=desk.queue.length?desk.queue.map(x=>`<div class="qi"><span class="status ${x[0]}">${esc(x[1])}</span><span>${esc(x[2])}</span></div>`).join(''):'<span class="qnone">Nothing needs a person yet.</span>';
+  if(flash){tb.classList.remove('flash'); void tb.offsetWidth; tb.classList.add('flash')}
+}
+function setMoment(i){document.querySelectorAll('#moments li').forEach((li,j)=>{li.className=j<i?'past':j===i?'on':''})}
+function setState(on){const s=$('#agentState'); s.className='state'+(on?'':' idle'); s.innerHTML='<i></i>'+(on?'running':'run complete')}
+
+function exec(s){
+  const g=gen, t=s[0];
+  switch(t){
+   case 'm': setMoment(s[1]); return 0;
+   case 'evt': case 'think': case 'rule':
+     logLine(t, t==='think'?`<span class="thought">${esc(s[1])}</span>`:esc(s[1])); return 900;
+   case 'tool': case 'write': case 'human': case 'send':
+     logLine(t,`<span class="fn">${esc(s[1])}</span><span class="args">(${esc(s[2])})</span>${s[3]?`<span class="res">→ ${esc(s[3])}</span>`:''}`); return 1000;
+   case 'a': {
+     const r=document.createElement('div'); r.className='row'; r.innerHTML='<div class="bub typing"><span></span><span></span><span></span></div>'; addRow(r);
+     setTimeout(()=>{ if(g!==gen) return; r.remove(); bubble(s[1]); }, 900/speed);
+     return 900+Math.min(2600, 600+s[1].length*16);
+   }
+   case 'me': bubble(s[1],true); return 1300;
+   case 'stamp': {const d=document.createElement('div'); d.className='stamp'; d.textContent=s[1]; addRow(d); return 900}
+   case 'card': {
+     const c=s[1], r=document.createElement('div'); r.className='row';
+     r.innerHTML=`<div class="card">${cardArt(c.art[0],c.art[1])}<div class="cb"><div class="cn">${esc(c.title)}</div><div class="cs">${esc(c.sub)}</div></div>${c.btns.map(b=>`<button class="cbtn" type="button" tabindex="-1" data-b="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
+     addRow(r); return 1500;
+   }
+   case 'tap': {
+     const btns=[...thread.querySelectorAll('.cbtn')].filter(b=>b.dataset.b===s[1]); const b=btns[btns.length-1];
+     if(b) b.classList.add('press');
+     setTimeout(()=>{ if(g!==gen) return; bubble(s[1],true); }, 600/speed);
+     return 1600;
+   }
+   case 'web': {
+     const w=s[1], wv=$('#webview');
+     wv.innerHTML=`<div class="wv-grab"></div><div class="wv-bar"><b>${esc(w.title)}</b><span>${esc(w.note)}</span></div><div class="wv-body">${w.rows.map(r=>`<div class="wv-row"><div>${esc(r[0])}<small>${esc(r[1])}</small></div><span>${esc(r[2])}</span></div>`).join('')}<div class="wv-row tot"><div>Total</div><span>${esc(w.total)}</span></div><p>${esc(w.foot||'')}</p><button class="wv-submit" type="button" tabindex="-1" id="wvSubmit">Pay deposit</button></div>`;
+     wv.classList.add('open'); $('#scrim').classList.add('open'); return 2400;
+   }
+   case 'webSubmit': {const b=$('#wvSubmit'); if(b){b.textContent=s[1]; b.classList.add('done')} return 1300}
+   case 'surface': setSurface(s[1], true); return 900;
+   case 'webClose': $('#webview').classList.remove('open'); $('#scrim').classList.remove('open'); return 700;
+   case 'desk': {
+     const p=s[1];
+     ['status','val','valL','days','hand'].forEach(k=>{if(p[k]!==undefined) desk[k]=p[k]});
+     if(p.queue) desk.queue=p.queue;
+     if(p.rowStatus){ const i=desk.rows.findIndex(r=>r[4]==='warnc'); if(i>=0){desk.rows[i][3]=p.rowStatus[0]; desk.rows[i][4]=p.rowStatus[1]} }
+     if(p.addRow) desk.rows=desk.rows.concat([p.addRow]);
+     if(p.lastStatus){const r=desk.rows[desk.rows.length-1]; r[3]=p.lastStatus[0]; r[4]=p.lastStatus[1]}
+     renderDesk(true); return 700;
+   }
+  }
+  return 500;
+}
+
+function setSurface(mode, animate){
+  const d=$('#device');
+  const apply=()=>{ d.className='device '+(mode==='web'?'web':'phone');
+    $('#surfaceTag').innerHTML=mode==='web'?'<i></i>Website chat · albion.edu':'<i></i>RCS · verified Albion College sender';
+    $('#cbox').textContent=mode==='web'?'Ask about Albion':'RCS message';
+    if(mode==='rcs'){ thread.innerHTML='<div class="stamp">Albion College · RCS</div>'; } };
+  if(!animate){apply(); return}
+  d.classList.add('swap'); setTimeout(()=>{apply(); d.classList.remove('swap')}, 300);
+}
+function next(){
+  if(paused) return;
+  const r=RUNS[run];
+  if(idx>=r.steps.length){ setState(false); setMoment(r.moments.length); return }
+  const wait=exec(r.steps[idx++]);
+  timer=setTimeout(next, wait/speed);
+}
+function start(i){
+  gen++; clearTimeout(timer); run=i; idx=0; paused=false; $('#pause').textContent='Pause';
+  const r=RUNS[i];
+  document.querySelectorAll('.tab').forEach((t,j)=>t.setAttribute('aria-selected', j===i?'true':'false'));
+  $('#scene').innerHTML=`<h3>${esc(r.title)}</h3><p>${esc(r.desc)}</p><ul class="moments" id="moments">${r.moments.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>`;
+  setSurface(r.surface||'rcs', false);
+  thread.innerHTML='<div class="stamp">Today</div>'; log.innerHTML='';
+  $('#webview').classList.remove('open'); $('#scrim').classList.remove('open');
+  desk=JSON.parse(JSON.stringify(r.desk)); renderDesk(false); setState(true);
+  timer=setTimeout(next, 600);
+}
+
+$('#tabs').innerHTML=RUNS.map((r,i)=>`<button class="tab" role="tab" type="button" aria-selected="false" data-i="${i}"><span class="n">0${i+1}</span>${esc(r.label)}</button>`).join('');
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'); if(b) start(+b.dataset.i)});
+$('#pause').addEventListener('click',()=>{ paused=!paused; $('#pause').textContent=paused?'Play':'Pause'; if(paused) clearTimeout(timer); else next(); });
+$('#speed').addEventListener('click',()=>{ speed=speed===1?2:1; $('#speed').textContent='Speed '+speed+'×'; });
+$('#replay').addEventListener('click',()=>start(run));
+
+function calc(){
+  const adm=+$('#sAdm').value, y=+$('#sYield').value, lift=+$('#sLift').value, net=+$('#sNet').value;
+  $('#oAdm').textContent=adm.toLocaleString('en-US'); $('#oYield').textContent=y+'%'; $('#oLift').textContent=lift.toFixed(1)+' pts'; $('#oNet').textContent=money(net);
+  const stu=adm*lift/100;
+  $('#rStu').textContent=Math.round(stu); $('#rYear').textContent=money(stu*net);
+  const four=stu*net*4; $('#rFour').textContent=four>=1e6?'$'+(four/1e6).toFixed(1)+'M':money(four);
+}
+['#sAdm','#sYield','#sLift','#sNet'].forEach(id=>$(id).addEventListener('input',calc));
+calc();
+start(0);
+</script>
+
+</body>
+</html>
